@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "./ChatContext";
-import { Hash, Settings, Users, Code2, Link as LinkIcon, Check } from "lucide-react";
+import { Hash, Settings, Users, Code2, Link as LinkIcon, Check, Layout } from "lucide-react";
 import { useState } from "react";
 
 const ROOMS = [
@@ -37,6 +37,9 @@ export default function Sidebar() {
                     <button onClick={handleCopyInvite} className="p-2 text-emerald-400 bg-emerald-500/10 rounded-lg">
                         {copied ? <Check size={16} /> : <LinkIcon size={16} />}
                     </button>
+                    <a href="/design" target="_blank" className="p-2 text-primary bg-primary/10 rounded-lg">
+                        <Layout size={16} />
+                    </a>
                     <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-text-muted hover:text-white bg-white/5 rounded-lg">
                         <Settings size={16} />
                     </button>
@@ -82,6 +85,14 @@ export default function Sidebar() {
                     <Settings size={18} />
                     Settings
                 </button>
+                <a
+                    href="/design"
+                    target="_blank"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all text-left mt-2 block"
+                >
+                    <Layout size={18} className="inline-block mr-3" />
+                    Design System
+                </a>
             </div>
         </aside>
     );
