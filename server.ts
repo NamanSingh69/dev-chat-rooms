@@ -96,7 +96,7 @@ app.prepare().then(() => {
             if (roomContexts[currentRoom].length > 50) roomContexts[currentRoom].shift();
 
             // Check if AI was mentioned
-            if (data.text.includes("@AI") || data.text.includes("```")) {
+            if (data.text.includes("@AI") || data.text.includes("@LowEntropyAI") || data.text.includes("```")) {
                 if (!data.apiKey) {
                     io.to(currentRoom).emit("receive-message", {
                         id: Date.now().toString(),
@@ -119,7 +119,7 @@ Based on the above, please provide a highly robust technical answer or bug fix. 
 
                     const aiMessage = {
                         id: Date.now().toString(),
-                        sender: "Gemini",
+                        sender: "LowEntropyAI",
                         text: aiResponse || "I couldn't generate a response.",
                         isAi: true,
                         timestamp: new Date()

@@ -87,7 +87,7 @@ export default function ChatWindow() {
                 {
                     id: "system-init",
                     sender: "System",
-                    text: `Joined **${currentRoom}** room. Tag @AI or paste code with \`\`\` to get instant AI help.`,
+                    text: `Joined **${currentRoom}** room. Tag @LowEntropyAI or paste code with \`\`\` to get instant AI help.`,
                     isAi: true,
                     timestamp: new Date()
                 }
@@ -129,7 +129,7 @@ export default function ChatWindow() {
 
             const aiMessage: Message = {
                 id: Date.now().toString(),
-                sender: "Gemini",
+                sender: "LowEntropyAI",
                 text: data.text || "I couldn't generate a response.",
                 isAi: true,
                 timestamp: new Date(),
@@ -178,7 +178,7 @@ export default function ChatWindow() {
             // API route mode (Vercel) — client handles display + AI call
             setMessages(prev => [...prev, newMessage]);
 
-            const needsAi = input.includes("@AI") || input.includes("```");
+            const needsAi = input.includes("@LowEntropyAI") || input.includes("@AI") || input.includes("```");
             if (needsAi && apiKey) {
                 await callAiViaApi([...messages, newMessage]);
             } else if (needsAi && !apiKey) {
@@ -289,7 +289,7 @@ export default function ChatWindow() {
                                     <div className="w-2 h-2 bg-ai rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                                     <div className="w-2 h-2 bg-ai rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
                                 </div>
-                                <span>Gemini is thinking...</span>
+                                <span>LowEntropyAI is thinking...</span>
                             </div>
                         </div>
                     </div>
@@ -330,7 +330,7 @@ export default function ChatWindow() {
                                 type="text"
                                 value={input}
                                 onChange={handleTyping}
-                                placeholder="Message the room or tag @AI for instant code help..."
+                                placeholder="Message the room or tag @LowEntropyAI for instant code help..."
                                 className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-white placeholder-white/40 py-2 h-full"
                             />
                             <button
