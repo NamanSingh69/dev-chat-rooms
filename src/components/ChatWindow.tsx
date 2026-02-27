@@ -21,7 +21,7 @@ interface Message {
 let socket: Socket | null = null;
 
 export default function ChatWindow() {
-    const { currentRoom, username, apiKey } = useChat();
+    const { currentRoom, username, apiKey, setIsSettingsOpen } = useChat();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [onlineCount, setOnlineCount] = useState(1);
@@ -48,6 +48,14 @@ export default function ChatWindow() {
 
             socket.on("receive-message", (msg: Message) => {
                 setMessages((prev) => [...prev, { ...msg, timestamp: new Date(msg.timestamp) }]);
+            });
+
+            socket.on("room-history", (history: Message[]) => {
+                setMessages(prev => {
+                    const initMsg = prev.find(p => p.id === "system-init");
+                    const parsedHistory = history.map(m => ({ ...m, timestamp: new Date(m.timestamp) }));
+                    return initMsg ? [initMsg, ...parsedHistory] : parsedHistory;
+                });
             });
 
             socket.on("room-users", (users: any[]) => {
@@ -128,10 +136,18 @@ export default function ChatWindow() {
             };
             setMessages(prev => [...prev, aiMessage]);
         } catch (error: any) {
+            let errorMsg = error.message;
+            if (errorMsg.includes("{")) {
+                try {
+                    const parsed = JSON.parse(errorMsg.substring(errorMsg.indexOf("{")));
+                    if (parsed.error?.message) errorMsg = parsed.error.message;
+                } catch { }
+            }
+
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 sender: "System",
-                text: `AI Request Failed: ${error.message}`,
+                text: `AI Request Failed: ${errorMsg}`,
                 isAi: true,
                 timestamp: new Date(),
             }]);
@@ -179,16 +195,16 @@ export default function ChatWindow() {
     };
 
     return (
-        <div className="flex-1 flex flex-col h-full relative">
-            <header className="px-6 py-4 glass border-b border-white/5 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex-1 flex flex-col h-full relative overflow-hidden">
+            <header className="px-4 py-3 md:px-6 md:py-4 glass border-b border-white/5 flex items-center justify-between sticky top-0 z-10 shrink-0">
                 <div>
-                    <h2 className="text-xl font-bold flex items-center gap-2">
+                    <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
                         <span className="text-primary text-xl">#</span>
                         {currentRoom === "general" ? "General" :
                             currentRoom === "frontend" ? "Frontend Issues" :
                                 currentRoom === "backend" ? "Backend APIs" : "AI Assistance"}
                     </h2>
-                    <p className="text-sm text-text-muted mt-1">Real-time collaboration room with AI support</p>
+                    <p className="text-xs md:text-sm text-text-muted mt-0.5 md:mt-1">Real-time collaboration room with AI support</p>
                 </div>
                 <div className="flex -space-x-2 items-center">
                     <div className="w-8 h-8 rounded-full border-2 border-surface bg-green-500 flex items-center justify-center relative">
@@ -206,7 +222,7 @@ export default function ChatWindow() {
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
                 {messages.map((msg) => (
                     <div key={msg.id} className={`flex gap-4 max-w-4xl ${msg.sender === username ? "ml-auto flex-row-reverse" : ""}`}>
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${msg.sender === "System" ? "bg-gray-700" :
@@ -293,26 +309,40 @@ export default function ChatWindow() {
                 <div ref={endOfMessagesRef} />
             </div>
 
-            <div className="p-4 glass border-t border-white/5 mx-4 mb-4 rounded-2xl shadow-xl flex items-center gap-2 transition-all focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary/50">
-                <button className="p-2 text-text-muted hover:text-white transition-colors bg-white/5 rounded-lg hover:bg-white/10">
-                    <Code2 size={20} />
-                </button>
-                <form onSubmit={handleSend} className="flex-1 flex items-center gap-2">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={handleTyping}
-                        placeholder="Message the room or tag @AI for instant code help..."
-                        className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-white placeholder-white/40 py-2 h-full"
-                    />
-                    <button
-                        type="submit"
-                        disabled={!input.trim()}
-                        className="p-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)] group"
-                    >
-                        <Send size={18} className="translate-x-[-1px] group-hover:translate-x-[1px] transition-transform" />
-                    </button>
-                </form>
+            <div className="p-3 md:p-4 glass border-t border-white/5 mx-2 md:mx-4 mb-2 md:mb-4 rounded-2xl shadow-xl flex items-center gap-2 transition-all">
+                {!username ? (
+                    <div className="flex-1 flex flex-col items-center justify-center p-2 text-center">
+                        <p className="text-text-muted text-sm mb-3">You must be logged in and set an API key to access this room.</p>
+                        <button
+                            onClick={() => setIsSettingsOpen(true)}
+                            className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg font-medium transition-all"
+                        >
+                            Kindly login to access
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <button className="p-2 text-text-muted hover:text-white transition-colors bg-white/5 rounded-lg hover:bg-white/10">
+                            <Code2 size={20} />
+                        </button>
+                        <form onSubmit={handleSend} className="flex-1 flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={handleTyping}
+                                placeholder="Message the room or tag @AI for instant code help..."
+                                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-white placeholder-white/40 py-2 h-full"
+                            />
+                            <button
+                                type="submit"
+                                disabled={!input.trim()}
+                                className="p-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)] group"
+                            >
+                                <Send size={18} className="translate-x-[-1px] group-hover:translate-x-[1px] transition-transform" />
+                            </button>
+                        </form>
+                    </>
+                )}
             </div>
         </div>
     );

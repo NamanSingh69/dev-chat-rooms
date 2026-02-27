@@ -71,6 +71,9 @@ app.prepare().then(() => {
 
             if (!roomContexts[room]) roomContexts[room] = [];
 
+            // Send history to user joining
+            socket.emit("room-history", roomContexts[room]);
+
             // Broadcast join
             io.to(room).emit("user-joined", { username });
 
@@ -90,7 +93,7 @@ app.prepare().then(() => {
             // Save to context
             if (!roomContexts[currentRoom]) roomContexts[currentRoom] = [];
             roomContexts[currentRoom].push(data);
-            if (roomContexts[currentRoom].length > 10) roomContexts[currentRoom].shift();
+            if (roomContexts[currentRoom].length > 50) roomContexts[currentRoom].shift();
 
             // Check if AI was mentioned
             if (data.text.includes("@AI") || data.text.includes("```")) {
@@ -126,10 +129,17 @@ Based on the above, please provide a highly robust technical answer or bug fix. 
                     io.to(currentRoom).emit("receive-message", aiMessage);
                 } catch (error: any) {
                     console.error("AI Error:", error);
+                    let errorMsg = error.message;
+                    if (errorMsg.includes("{")) {
+                        try {
+                            const parsed = JSON.parse(errorMsg.substring(errorMsg.indexOf("{")));
+                            if (parsed.error?.message) errorMsg = parsed.error.message;
+                        } catch { }
+                    }
                     io.to(currentRoom).emit("receive-message", {
                         id: Date.now().toString(),
                         sender: "System",
-                        text: `AI Request Failed: ${error.message}`,
+                        text: `AI Request Failed: ${errorMsg}`,
                         isAi: true,
                         timestamp: new Date()
                     });
