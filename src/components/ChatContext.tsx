@@ -38,10 +38,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             setUsernameState(storedName);
         }
 
-        // Auto open settings if no name/session or key
-        if (!storedKey || (!storedName && !session?.user?.name)) {
-            setIsSettingsOpen(true);
-        }
         setMounted(true);
     }, [session]);
 
